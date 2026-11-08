@@ -1,0 +1,36 @@
+{
+  "name": "S.A.T.U.R.N. — Global GeoAI Agent",
+  "short_name": "SATURN",
+  "description": "Voice- and text-controlled Earth-intelligence command center with a custom 3D globe and real NASA imagery.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#030a06",
+  "theme_color": "#39ff88",
+  "categories": [
+    "utilities",
+    "education",
+    "navigation"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

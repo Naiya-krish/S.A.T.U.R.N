@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// S.A.T.U.R.N. Firestore rules — least privilege, per-user isolation.
+//
+// Path: saturn/users/{uid}/{collection}/{docId}
+//
+// The ONLY thing a signed-in user may do is read and write documents under
+// their own uid. Everything else is denied by default. The backend uses the
+// Admin SDK, which bypasses these rules, so server-side writes still work.
+//
+// Public demo mode does not use Firestore at all: without a project the backend
+// keeps saved data in-process, so no rule ever grants anonymous access.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Deny anything not explicitly allowed below.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /saturn/users/{uid} {
+      // Only the owner can see their own profile document (if one is created).
+      allow read: if isSelf(uid);
+      allow write: if false;
+
+      match /{collection}/{docId} {
+        allow read:   if isSelf(uid) && isKnownCollection(collection);
+        allow create: if isSelf(uid) && isKnownCollection(collection) && validDocument(collection);
+        allow update: if isSelf(uid) && isKnownCollection(collection) && validDocument(collection);
+        allow delete: if isSelf(uid) && isKnownCollection(collection);
+      }
+    }
+
+    function isSelf(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function isKnownCollection(c) {
+      return c == 'regions' || c == 'views' || c == 'prefs';
+    }
+
+    // Server-side shape checks: cheap, and they stop a compromised client from
+    // writing junk that would later break the UI.
+    function validDocument(c) {
+      return (c == 'regions' && validRegion()) ||
+             (c == 'views'   && validView()) ||
+             (c == 'prefs'   && validPrefs());
+    }
+
+    function validRegion() {
+      return request.resource.data.keys().hasAll(['name', 'lat', 'lon'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 200
+        && request.resource.data.lat is number
+        && request.resource.data.lat >= -90
+        && request.resource.data.lat <= 90
+        && request.resource.data.lon is number
+        && request.resource.data.lon >= -180
+        && request.resource.data.lon <= 180;
+    }
+
+    function validView() {
+      return request.resource.data.keys().hasAll(['name', 'lat', 'lon'])
+        && request.resource.data.name is string
+        && request.resource.data.lat is number
+        && request.resource.data.lon is number;
+    }
+
+    function validPrefs() {
+      return request.resource.data.keys().hasAll(['opacity'])
+        && request.resource.data.opacity is number
+        && request.resource.data.opacity >= 0
+        && request.resource.data.opacity <= 1;
+    }
+  }
+}
